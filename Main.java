@@ -1,13 +1,18 @@
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
+
+    static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
 
     public static void main(String[] args) {
 
         GameServer server = new GameServer();
         Random random = new Random();
 
-        int totalSimulatedUsers = 300;
+        int totalSimulatedUsers = 140;
 
         for (int i = 1; i <= totalSimulatedUsers; i++) {
 
@@ -16,16 +21,16 @@ public class Main {
             new Thread(() -> {
                 while (true) {
                     try {
-
                         server.join(p);
+                        // random stay duration (5s to 40s)
+                        int stay = 5 + random.nextInt(35);
 
-                        // playing time
-                        Thread.sleep(10000 + random.nextInt(4000));
+                        scheduler.schedule(() -> {
+                            server.leave(p);
+                        }, stay, TimeUnit.SECONDS);
 
-                        server.leave(p);
-
-                        // thinking time (outside system)
-                        Thread.sleep(1000 + random.nextInt(3000));
+                        // player thinks before rejoining (independent of leave)
+                        Thread.sleep(3000 + random.nextInt(5000));
 
                     } catch (InterruptedException ignored) {
                     }
